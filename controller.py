@@ -4,6 +4,7 @@ import time
 import subprocess
 import random
 
+SIMULATION_MODE = True
 PROMETHEUS_URL = "http://localhost:9090/api/v1/query"
 CURRENT_CPU_M = 300    
 
