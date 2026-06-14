@@ -81,7 +81,7 @@ def main():
         else:
             print("   -> Decyzja: Brak akcji. Parametry w normie.")
 
-        time.sleep(4)  # Czekamy 4 sekundy w pętli
+        time.sleep(4)
 
 if __name__ == "__main__":
     main()
