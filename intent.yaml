@@ -1,7 +1,11 @@
+# intent.yaml
 thresholds:
-  session_warning: 10       
-  cpu_critical: 0.8         
+  session_warning: 10
+  cpu_critical: 0.8
+  session_safe: 3
+  cpu_safe: 0.3
+
 scaling:
-  cpu_step: "100m"          
-  min_cpu: "200m"           
-  max_cpu: "1000m"          
+  step_cpu_m: 100
+  min_cpu_m: 200
+  max_cpu_m: 1000
