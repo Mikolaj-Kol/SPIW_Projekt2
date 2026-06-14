@@ -1,0 +1,7 @@
+thresholds:
+  session_warning: 10       
+  cpu_critical: 0.8         
+scaling:
+  cpu_step: "100m"          
+  min_cpu: "200m"           
+  max_cpu: "1000m"          
