@@ -23,17 +23,37 @@ def get_metric(query):
         print(f"[Błąd] Problem z Prometheusem: {e}")
         return 0.0
 
+def get_upf_pod_name():
+    if SIMULATION_MODE:
+        return "open5gs-upf-symulacja"
+    try:
+        # Pobieramy listę wszystkich podów i szukamy tego od UPF
+        command = ["kubectl", "get", "pods", "-n", "default", "--no-headers", "-o", "custom-columns=:metadata.name"]
+        result = subprocess.run(command, capture_output=True, text=True, check=True)
+        for line in result.stdout.splitlines():
+            if line.startswith("open5gs-upf-"):
+                return line.strip()
+    except Exception as e:
+        print(f"[Błąd] Nie udało się pobrać nazwy Poda: {e}")
+    return None
+
 def scale_upf(new_cpu_m):
+    pod_name = get_upf_pod_name()
+    if not pod_name:
+        print("   [Błąd] Brak Poda UPF do przeskalowania.")
+        return
+
+    # Patchujemy bezpośrednio PODA (In-place scaling), a nie Deployment!
     command = [
-        "kubectl", "patch", "deployment", "open5gs-upf",
+        "kubectl", "patch", "pod", pod_name,
         "-n", "default", "--type=json",
-        "-p", f'[{{"op": "replace", "path": "/spec/template/spec/containers/0/resources/requests/cpu", "value": "{new_cpu_m}m"}}, {{"op": "replace", "path": "/spec/template/spec/containers/0/resources/limits/cpu", "value": "{new_cpu_m}m"}}]'
+        "-p", f'[{{"op": "replace", "path": "/spec/containers/0/resources/requests/cpu", "value": "{new_cpu_m}m"}}, {{"op": "replace", "path": "/spec/containers/0/resources/limits/cpu", "value": "{new_cpu_m}m"}}]'
     ]
     
     if SIMULATION_MODE:
         print(f"   [SYMULACJA] Wykonano by komendę: {' '.join(command)}")
     else:
-        print(f"   [WYKONANIE] Skalowanie UPF do {new_cpu_m}m (requests oraz limits)...")
+        print(f"   [WYKONANIE] Skalowanie in-place Poda {pod_name} do {new_cpu_m}m...")
         subprocess.run(command)
 
 def main():
@@ -74,5 +94,5 @@ def main():
         print("")
         time.sleep(4)
 
-if _name_ == "_main_":
+if __name__ == "__main__":
     main()
