@@ -43,7 +43,6 @@ def scale_upf(new_cpu_m):
         print("   [Błąd] Brak Poda UPF do przeskalowania.")
         return
 
-    # Patchujemy bezpośrednio PODA (In-place scaling), a nie Deployment!
     command = [
         "kubectl", "patch", "pod", pod_name,
         "-n", "default", "--type=json",
