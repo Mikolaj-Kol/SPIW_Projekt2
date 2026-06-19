@@ -12,6 +12,10 @@ def load_intent():
 
 def get_metric(query):
     if SIMULATION_MODE:
+        #if 'amf_session' in query:
+            #return 15.0      
+        #elif 'container_cpu_usage' in query:
+            #return 0.45       
         return 0.0
     try:
         response = requests.get(PROMETHEUS_URL, params={'query': query})
