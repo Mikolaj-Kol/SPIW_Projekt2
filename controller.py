@@ -4,7 +4,7 @@ import yaml
 import subprocess
 
 SIMULATION_MODE = False
-PROMETHEUS_URL = "http://192.168.0.202:9090/api/v1/query"
+PROMETHEUS_URL = "http://192.168.20.202:9090/api/v1/query"
 
 def load_intent():
     with open('intent.yaml', 'r') as file:
@@ -12,10 +12,6 @@ def load_intent():
 
 def get_metric(query):
     if SIMULATION_MODE:
-        #if 'amf_session' in query:
-            #return 15.0      
-        #elif 'container_cpu_usage' in query:
-            #return 0.45       
         return 0.0
     try:
         response = requests.get(PROMETHEUS_URL, params={'query': query})
@@ -31,7 +27,6 @@ def get_upf_pod_name():
     if SIMULATION_MODE:
         return "open5gs-upf-symulacja"
     try:
-        # Pobieramy listę wszystkich podów i szukamy tego od UPF
         command = ["kubectl", "get", "pods", "-n", "default", "--no-headers", "-o", "custom-columns=:metadata.name"]
         result = subprocess.run(command, capture_output=True, text=True, check=True)
         for line in result.stdout.splitlines():
@@ -48,9 +43,9 @@ def scale_upf(new_cpu_m):
         return
 
     command = [
-        "kubectl", "patch", "pod", pod_name,
-        "-n", "default", "--type=json",
-        "-p", f'[{{"op": "replace", "path": "/spec/containers/0/resources/requests/cpu", "value": "{new_cpu_m}m"}}, {{"op": "replace", "path": "/spec/containers/0/resources/limits/cpu", "value": "{new_cpu_m}m"}}]'
+        "kubectl", "patch", "-n", "default", "pod", pod_name,
+        "--subresource", "resize", "--patch", 
+        f'{{"spec":{{"containers":[{{ "name":"open5gs-upf", "resources":{{"limits":{{"cpu":"{new_cpu_m}m"}} }} }}]}}}}'
     ]
     
     if SIMULATION_MODE:
@@ -61,12 +56,11 @@ def scale_upf(new_cpu_m):
 
 def main():
     print("--- Start kontrolera UPF ---")
-    intent = load_intent()
-    print(f"Załadowana intencja: {intent}\n")
-
     current_cpu_m = 300
     
     while True:
+        intent = load_intent()
+        
         sessions = get_metric('amf_session{service="open5gs-amf-metrics", namespace="default"}')
         cpu_usage = get_metric('rate(container_cpu_usage_seconds_total{pod=~"open5gs-upf-.*", container="open5gs-upf", namespace="default"}[1m])')
 
